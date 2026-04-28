@@ -9,3 +9,5 @@ tsconfig.tsbuildinfo
 private/
 .replit
 replit.nix
+quartz_deploy_key
+quartz_deploy_key.pub

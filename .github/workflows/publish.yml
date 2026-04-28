@@ -1,0 +1,48 @@
+name: Publish Quartz site
+
+on:
+  # Запускаться при пуше в notes-repo через repository_dispatch
+  repository_dispatch:
+    types: [notes-updated]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout quartz-site
+        uses: actions/checkout@v4
+
+      - name: Setup SSH for notes repo
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.NOTES_DEPLOY_KEY }}
+
+      - name: Clone notes repo
+        run: |
+          git clone git@github.com:YOUR_USERNAME/your-notes.git /tmp/notes
+
+      - name: Copy notes into Quartz content
+        run: |
+          rm -rf content/*
+          cp -r /tmp/notes/content/. content/
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Quartz
+        run: npx quartz build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
